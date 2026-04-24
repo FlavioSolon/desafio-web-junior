@@ -6,6 +6,14 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
+test('deve retornar status 401 quando não estiver autenticado', function () {
+    // Act
+    $resposta = $this->getJson('/api/clientes');
+
+    // Assert
+    $resposta->assertStatus(401);
+});
+
 describe('ClientController - CRUD de Clientes', function () {
 
     beforeEach(function () {
@@ -118,14 +126,6 @@ describe('ClientController - CRUD de Clientes', function () {
             expect($resposta->json('data'))->toHaveCount(10);
             expect($resposta->json('meta.current_page'))->toBe(1);
             expect($resposta->json('meta.last_page'))->toBe(2);
-        });
-
-        test('deve retornar status 401 quando não estiver autenticado', function () {
-            // Act
-            $resposta = $this->getJson('/api/clientes');
-
-            // Assert
-            $resposta->assertStatus(401);
         });
     });
 

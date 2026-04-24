@@ -95,17 +95,6 @@ describe('CepController - Consulta de Endereços', function () {
             ]);
     });
 
-    test('deve retornar status 401 quando não estiver autenticado', function () {
-        // Arrange
-        $cep = '01001000';
-
-        // Act
-        $resposta = $this->getJson("/api/cep/{$cep}");
-
-        // Assert
-        $resposta->assertStatus(401);
-    });
-
     test('deve retornar status 400 quando CEP tiver formato inválido', function () {
         // Arrange
         $cep = 'invalido';
@@ -117,7 +106,7 @@ describe('CepController - Consulta de Endereços', function () {
         // Assert
         $resposta->assertStatus(400)
             ->assertJson([
-                'message' => 'Formato de CEP inválido',
+                'message' => 'CEP deve conter 8 dígitos numéricos',
             ]);
     });
 
@@ -195,4 +184,15 @@ describe('CepController - Consulta de Endereços', function () {
                 'message' => 'Erro ao consultar serviço de CEP',
             ]);
     });
+});
+
+test('deve retornar status 401 quando não estiver autenticado', function () {
+    // Arrange
+    $cep = '01001000';
+
+    // Act
+    $resposta = $this->getJson("/api/cep/{$cep}");
+
+    // Assert
+    $resposta->assertStatus(401);
 });
