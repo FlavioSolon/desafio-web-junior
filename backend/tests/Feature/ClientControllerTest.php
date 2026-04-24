@@ -7,17 +7,14 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 test('deve retornar status 401 quando não estiver autenticado', function () {
-    // Act
     $resposta = $this->getJson('/api/clientes');
 
-    // Assert
     $resposta->assertStatus(401);
 });
 
 describe('ClientController - CRUD de Clientes', function () {
 
     beforeEach(function () {
-        // Criar usuário e autenticar
         $this->user = User::create([
             'name' => 'Usuário Teste',
             'email' => 'teste@email.com',
@@ -30,7 +27,6 @@ describe('ClientController - CRUD de Clientes', function () {
     describe('Listagem de Clientes', function () {
 
         test('deve retornar status 200 e lista paginada de clientes', function () {
-            // Arrange
             Cliente::insert([
                 [
                     'nome' => 'Cliente 1',
@@ -60,11 +56,9 @@ describe('ClientController - CRUD de Clientes', function () {
                 ],
             ]);
 
-            // Act
             $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
                 ->getJson('/api/clientes');
 
-            // Assert
             $resposta->assertStatus(200)
                 ->assertJsonStructure([
                     'data' => [
@@ -92,17 +86,14 @@ describe('ClientController - CRUD de Clientes', function () {
         });
 
         test('deve retornar lista vazia quando não houver clientes', function () {
-            // Act
             $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
                 ->getJson('/api/clientes');
 
-            // Assert
             $resposta->assertStatus(200);
             expect($resposta->json('data'))->toBeEmpty();
         });
 
         test('deve paginar resultados corretamente', function () {
-            // Arrange - Criar 15 clientes
             for ($i = 1; $i <= 15; $i++) {
                 Cliente::create([
                     'nome' => "Cliente {$i}",
@@ -117,11 +108,9 @@ describe('ClientController - CRUD de Clientes', function () {
                 ]);
             }
 
-            // Act - Página 1
             $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
                 ->getJson('/api/clientes?page=1&per_page=10');
 
-            // Assert
             $resposta->assertStatus(200);
             expect($resposta->json('data'))->toHaveCount(10);
             expect($resposta->json('meta.current_page'))->toBe(1);
@@ -132,7 +121,6 @@ describe('ClientController - CRUD de Clientes', function () {
     describe('Criação de Clientes', function () {
 
         test('deve retornar status 201 ao cadastrar cliente com payload válido', function () {
-            // Arrange
             $payload = [
                 'nome' => 'Novo Cliente',
                 'cpf_cnpj' => '12345678900',
@@ -146,11 +134,9 @@ describe('ClientController - CRUD de Clientes', function () {
                 'uf' => 'SP',
             ];
 
-            // Act
             $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
                 ->postJson('/api/clientes', $payload);
 
-            // Assert
             $resposta->assertStatus(201)
                 ->assertJson([
                     'message' => 'Cliente criado com sucesso',
@@ -165,7 +151,6 @@ describe('ClientController - CRUD de Clientes', function () {
                     ],
                 ]);
 
-            // Verificar se foi salvo no banco
             $this->assertDatabaseHas('clientes', [
                 'nome' => 'Novo Cliente',
                 'email' => 'novo@email.com',
@@ -174,7 +159,6 @@ describe('ClientController - CRUD de Clientes', function () {
         });
 
         test('deve retornar status 422 quando e-mail for inválido', function () {
-            // Arrange
             $payload = [
                 'nome' => 'Novo Cliente',
                 'cpf_cnpj' => '12345678900',
@@ -187,17 +171,14 @@ describe('ClientController - CRUD de Clientes', function () {
                 'uf' => 'SP',
             ];
 
-            // Act
             $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
                 ->postJson('/api/clientes', $payload);
 
-            // Assert
             $resposta->assertStatus(422)
                 ->assertJsonValidationErrors(['email']);
         });
 
         test('deve retornar status 422 quando CPF/CNPJ não for fornecido', function () {
-            // Arrange
             $payload = [
                 'nome' => 'Novo Cliente',
                 'email' => 'novo@email.com',
@@ -209,17 +190,14 @@ describe('ClientController - CRUD de Clientes', function () {
                 'uf' => 'SP',
             ];
 
-            // Act
             $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
                 ->postJson('/api/clientes', $payload);
 
-            // Assert
             $resposta->assertStatus(422)
                 ->assertJsonValidationErrors(['cpf_cnpj']);
         });
 
         test('deve retornar status 422 quando nome não for fornecido', function () {
-            // Arrange
             $payload = [
                 'cpf_cnpj' => '12345678900',
                 'email' => 'novo@email.com',
@@ -231,17 +209,14 @@ describe('ClientController - CRUD de Clientes', function () {
                 'uf' => 'SP',
             ];
 
-            // Act
             $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
                 ->postJson('/api/clientes', $payload);
 
-            // Assert
             $resposta->assertStatus(422)
                 ->assertJsonValidationErrors(['nome']);
         });
 
         test('deve retornar status 409 ao tentar cadastrar CPF duplicado', function () {
-            // Arrange
             Cliente::create([
                 'nome' => 'Cliente Existente',
                 'cpf_cnpj' => '12345678900',
@@ -266,11 +241,9 @@ describe('ClientController - CRUD de Clientes', function () {
                 'uf' => 'SP',
             ];
 
-            // Act
             $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
                 ->postJson('/api/clientes', $payload);
 
-            // Assert
             $resposta->assertStatus(409)
                 ->assertJson([
                     'message' => 'CPF/CNPJ já cadastrado',
@@ -278,7 +251,6 @@ describe('ClientController - CRUD de Clientes', function () {
         });
 
         test('deve retornar status 409 ao tentar cadastrar e-mail duplicado', function () {
-            // Arrange
             Cliente::create([
                 'nome' => 'Cliente Existente',
                 'cpf_cnpj' => '12345678900',
@@ -303,11 +275,9 @@ describe('ClientController - CRUD de Clientes', function () {
                 'uf' => 'SP',
             ];
 
-            // Act
             $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
                 ->postJson('/api/clientes', $payload);
 
-            // Assert
             $resposta->assertStatus(409)
                 ->assertJson([
                     'message' => 'E-mail já cadastrado',
@@ -332,7 +302,6 @@ describe('ClientController - CRUD de Clientes', function () {
         });
 
         test('deve atualizar dados do cliente e retornar status 200', function () {
-            // Arrange
             $payload = [
                 'nome' => 'Cliente Atualizado',
                 'cpf_cnpj' => '12345678900',
@@ -346,11 +315,9 @@ describe('ClientController - CRUD de Clientes', function () {
                 'uf' => 'RJ',
             ];
 
-            // Act
             $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
                 ->putJson("/api/clientes/{$this->cliente->id}", $payload);
 
-            // Assert
             $resposta->assertStatus(200)
                 ->assertJson([
                     'message' => 'Cliente atualizado com sucesso',
@@ -364,7 +331,6 @@ describe('ClientController - CRUD de Clientes', function () {
         });
 
         test('deve retornar status 404 ao tentar atualizar cliente inexistente', function () {
-            // Arrange
             $payload = [
                 'nome' => 'Cliente',
                 'cpf_cnpj' => '12345678900',
@@ -377,11 +343,9 @@ describe('ClientController - CRUD de Clientes', function () {
                 'uf' => 'SP',
             ];
 
-            // Act
             $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
                 ->putJson('/api/clientes/9999', $payload);
 
-            // Assert
             $resposta->assertStatus(404);
         });
     });
@@ -389,7 +353,6 @@ describe('ClientController - CRUD de Clientes', function () {
     describe('Exclusão de Clientes', function () {
 
         test('deve excluir cliente e retornar status 204', function () {
-            // Arrange
             $cliente = Cliente::create([
                 'nome' => 'Cliente para Excluir',
                 'cpf_cnpj' => '12345678900',
@@ -402,21 +365,17 @@ describe('ClientController - CRUD de Clientes', function () {
                 'uf' => 'SP',
             ]);
 
-            // Act
             $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
                 ->deleteJson("/api/clientes/{$cliente->id}");
 
-            // Assert
             $resposta->assertStatus(204);
             $this->assertDatabaseMissing('clientes', ['id' => $cliente->id]);
         });
 
         test('deve retornar status 404 ao tentar excluir cliente inexistente', function () {
-            // Act
             $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
                 ->deleteJson('/api/clientes/9999');
 
-            // Assert
             $resposta->assertStatus(404);
         });
     });

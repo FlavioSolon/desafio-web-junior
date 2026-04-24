@@ -13,7 +13,6 @@ beforeEach(function () {
 describe('BrasilApiService', function () {
 
     test('deve retornar endereço formatado em DTO ao informar CEP válido', function () {
-        // Arrange
         $cep = '01001000';
         $responseMock = [
             'cep' => '01001000',
@@ -28,10 +27,8 @@ describe('BrasilApiService', function () {
             'https://brasilapi.com.br/api/cep/v2/*' => Http::response($responseMock, 200),
         ]);
 
-        // Act
         $resultado = $this->service->buscarEnderecoPorCep($cep);
 
-        // Assert
         expect($resultado)->toBeInstanceOf(EnderecoDTO::class);
         expect($resultado->cep)->toBe('01001-000');
         expect($resultado->uf)->toBe('SP');
@@ -41,7 +38,6 @@ describe('BrasilApiService', function () {
     });
 
     test('deve lançar CepNotFoundException quando a BrasilAPI retornar 404', function () {
-        // Arrange
         $cep = '00000000';
 
         Http::fake([
@@ -51,13 +47,11 @@ describe('BrasilApiService', function () {
             ),
         ]);
 
-        // Act & Assert
         expect(fn () => $this->service->buscarEnderecoPorCep($cep))
             ->toThrow(CepNotFoundException::class, 'CEP não encontrado');
     });
 
     test('deve lançar ExternalServiceException quando a BrasilAPI estiver fora do ar (timeout)', function () {
-        // Arrange
         $cep = '01001000';
 
         Http::fake([
@@ -68,13 +62,11 @@ describe('BrasilApiService', function () {
             },
         ]);
 
-        // Act & Assert
         expect(fn () => $this->service->buscarEnderecoPorCep($cep))
             ->toThrow(ExternalServiceException::class, 'Serviço de consulta de CEP indisponível');
     });
 
     test('deve lançar ExternalServiceException quando a BrasilAPI retornar erro 500', function () {
-        // Arrange
         $cep = '01001000';
 
         Http::fake([
@@ -84,13 +76,11 @@ describe('BrasilApiService', function () {
             ),
         ]);
 
-        // Act & Assert
         expect(fn () => $this->service->buscarEnderecoPorCep($cep))
             ->toThrow(ExternalServiceException::class, 'Erro ao consultar serviço de CEP');
     });
 
     test('deve formatar CEP removendo caracteres não numéricos antes da consulta', function () {
-        // Arrange
         $cepComMascara = '01001-000';
         $responseMock = [
             'cep' => '01001000',
@@ -105,10 +95,8 @@ describe('BrasilApiService', function () {
             'https://brasilapi.com.br/api/cep/v2/01001000' => Http::response($responseMock, 200),
         ]);
 
-        // Act
         $resultado = $this->service->buscarEnderecoPorCep($cepComMascara);
 
-        // Assert
         expect($resultado->cep)->toBe('01001-000');
         Http::assertSent(function ($request) {
             return $request->url() === 'https://brasilapi.com.br/api/cep/v2/01001000';

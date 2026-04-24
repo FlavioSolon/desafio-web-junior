@@ -19,7 +19,6 @@ afterEach(function () {
 describe('ClientService', function () {
 
     test('deve criar um cliente com sucesso usando ClientDTO válido', function () {
-        // Arrange
         $dto = new ClienteDTO(
             nome: 'João Silva',
             cpfCnpj: '123.456.789-00',
@@ -55,15 +54,12 @@ describe('ClientService', function () {
             ->once()
             ->andReturn($clienteMock);
 
-        // Act
         $resultado = $this->service->criarCliente($dto);
 
-        // Assert
         expect($resultado)->toBe($clienteMock);
     });
 
     test('deve lançar exceção ao tentar criar cliente com CPF/CNPJ já existente', function () {
-        // Arrange
         $dto = new ClienteDTO(
             nome: 'João Silva',
             cpfCnpj: '123.456.789-00',
@@ -85,13 +81,11 @@ describe('ClientService', function () {
             ->once()
             ->andReturn($clienteExistente);
 
-        // Act & Assert
         expect(fn () => $this->service->criarCliente($dto))
             ->toThrow(DuplicateClientException::class, 'CPF/CNPJ já cadastrado');
     });
 
     test('deve lançar exceção ao tentar criar cliente com e-mail já existente', function () {
-        // Arrange
         $dto = new ClienteDTO(
             nome: 'João Silva',
             cpfCnpj: '123.456.789-00',
@@ -117,13 +111,11 @@ describe('ClientService', function () {
             ->once()
             ->andReturn(Mockery::mock(Cliente::class));
 
-        // Act & Assert
         expect(fn () => $this->service->criarCliente($dto))
             ->toThrow(DuplicateClientException::class, 'E-mail já cadastrado');
     });
 
     test('deve formatar e remover máscara do CPF antes de salvar', function () {
-        // Arrange
         $dto = new ClienteDTO(
             nome: 'Maria Santos',
             cpfCnpj: '987.654.321-00',
@@ -157,15 +149,12 @@ describe('ClientService', function () {
             ->once()
             ->andReturn(Mockery::mock(Cliente::class));
 
-        // Act
         $this->service->criarCliente($dto);
 
-        // Assert - Verificado pelo mock
         expect(true)->toBeTrue();
     });
 
     test('deve formatar e remover máscara do CNPJ antes de salvar', function () {
-        // Arrange
         $dto = new ClienteDTO(
             nome: 'Empresa XYZ Ltda',
             cpfCnpj: '11.222.333/0001-44',
@@ -198,15 +187,12 @@ describe('ClientService', function () {
             ->once()
             ->andReturn(Mockery::mock(Cliente::class));
 
-        // Act
         $this->service->criarCliente($dto);
 
-        // Assert - Verificado pelo mock
         expect(true)->toBeTrue();
     });
 
     test('deve atualizar cliente existente com sucesso', function () {
-        // Arrange
         $clienteId = 1;
         $dto = new ClienteDTO(
             nome: 'João Silva Atualizado',
@@ -235,15 +221,12 @@ describe('ClientService', function () {
             ->once()
             ->andReturn($clienteMock);
 
-        // Act
         $resultado = $this->service->atualizarCliente($clienteId, $dto);
 
-        // Assert
         expect($resultado)->toBe($clienteMock);
     });
 
     test('deve lançar exceção ao tentar atualizar cliente inexistente', function () {
-        // Arrange
         $clienteId = 999;
         $dto = new ClienteDTO(
             nome: 'Cliente Inexistente',
@@ -264,13 +247,11 @@ describe('ClientService', function () {
             ->once()
             ->andThrow(new ModelNotFoundException());
 
-        // Act & Assert
         expect(fn () => $this->service->atualizarCliente($clienteId, $dto))
             ->toThrow(ModelNotFoundException::class);
     });
 
     test('deve excluir cliente existente com sucesso', function () {
-        // Arrange
         $clienteId = 1;
         $clienteMock = Mockery::mock(Cliente::class);
 
@@ -286,10 +267,8 @@ describe('ClientService', function () {
             ->once()
             ->andReturnTrue();
 
-        // Act
         $resultado = $this->service->excluirCliente($clienteId);
 
-        // Assert
         expect($resultado)->toBeTrue();
     });
 });
