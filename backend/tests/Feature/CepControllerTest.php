@@ -1,0 +1,198 @@
+<?php
+
+use App\Models\User;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
+
+describe('CepController - Consulta de Endereços', function () {
+
+    beforeEach(function () {
+        $this->user = User::create([
+            'name' => 'Usuário Teste',
+            'email' => 'teste@email.com',
+            'password' => bcrypt('senha123'),
+        ]);
+
+        $this->token = auth('api')->login($this->user);
+    });
+
+    test('deve retornar status 200 e JSON do endereço ao consultar CEP válido', function () {
+        // Arrange
+        $cep = '01001000';
+        $responseMock = [
+            'cep' => '01001000',
+            'state' => 'SP',
+            'city' => 'São Paulo',
+            'neighborhood' => 'Sé',
+            'street' => 'Praça da Sé',
+            'service' => 'viacep',
+        ];
+
+        Http::fake([
+            'https://brasilapi.com.br/api/cep/v2/*' => Http::response($responseMock, 200),
+        ]);
+
+        // Act
+        $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->getJson("/api/cep/{$cep}");
+
+        // Assert
+        $resposta->assertStatus(200)
+            ->assertJson([
+                'cep' => '01001-000',
+                'uf' => 'SP',
+                'cidade' => 'São Paulo',
+                'bairro' => 'Sé',
+                'logradouro' => 'Praça da Sé',
+            ]);
+    });
+
+    test('deve aceitar CEP com máscara na URL', function () {
+        // Arrange
+        $cep = '01001-000';
+        $responseMock = [
+            'cep' => '01001000',
+            'state' => 'SP',
+            'city' => 'São Paulo',
+            'neighborhood' => 'Sé',
+            'street' => 'Praça da Sé',
+            'service' => 'viacep',
+        ];
+
+        Http::fake([
+            'https://brasilapi.com.br/api/cep/v2/01001000' => Http::response($responseMock, 200),
+        ]);
+
+        // Act
+        $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->getJson("/api/cep/{$cep}");
+
+        // Assert
+        $resposta->assertStatus(200);
+    });
+
+    test('deve retornar status 404 e mensagem padronizada quando CEP não existir', function () {
+        // Arrange
+        $cep = '00000000';
+
+        Http::fake([
+            'https://brasilapi.com.br/api/cep/v2/*' => Http::response(
+                ['message' => 'CEP não encontrado', 'type' => 'not_found'],
+                404
+            ),
+        ]);
+
+        // Act
+        $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->getJson("/api/cep/{$cep}");
+
+        // Assert
+        $resposta->assertStatus(404)
+            ->assertJson([
+                'message' => 'CEP não encontrado',
+            ]);
+    });
+
+    test('deve retornar status 401 quando não estiver autenticado', function () {
+        // Arrange
+        $cep = '01001000';
+
+        // Act
+        $resposta = $this->getJson("/api/cep/{$cep}");
+
+        // Assert
+        $resposta->assertStatus(401);
+    });
+
+    test('deve retornar status 400 quando CEP tiver formato inválido', function () {
+        // Arrange
+        $cep = 'invalido';
+
+        // Act
+        $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->getJson("/api/cep/{$cep}");
+
+        // Assert
+        $resposta->assertStatus(400)
+            ->assertJson([
+                'message' => 'Formato de CEP inválido',
+            ]);
+    });
+
+    test('deve retornar status 400 quando CEP tiver menos de 8 dígitos', function () {
+        // Arrange
+        $cep = '01001';
+
+        // Act
+        $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->getJson("/api/cep/{$cep}");
+
+        // Assert
+        $resposta->assertStatus(400)
+            ->assertJson([
+                'message' => 'CEP deve conter 8 dígitos numéricos',
+            ]);
+    });
+
+    test('deve retornar status 400 quando CEP tiver mais de 8 dígitos', function () {
+        // Arrange
+        $cep = '010010001';
+
+        // Act
+        $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->getJson("/api/cep/{$cep}");
+
+        // Assert
+        $resposta->assertStatus(400)
+            ->assertJson([
+                'message' => 'CEP deve conter 8 dígitos numéricos',
+            ]);
+    });
+
+    test('deve retornar status 502 quando serviço externo estiver indisponível', function () {
+        // Arrange
+        $cep = '01001000';
+
+        Http::fake([
+            'https://brasilapi.com.br/api/cep/v2/*' => function () {
+                throw new \Illuminate\Http\Client\ConnectionException(
+                    'cURL error 28: Connection timed out'
+                );
+            },
+        ]);
+
+        // Act
+        $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->getJson("/api/cep/{$cep}");
+
+        // Assert
+        $resposta->assertStatus(502)
+            ->assertJson([
+                'message' => 'Serviço de consulta de CEP indisponível',
+            ]);
+    });
+
+    test('deve retornar status 500 quando serviço externo retornar erro inesperado', function () {
+        // Arrange
+        $cep = '01001000';
+
+        Http::fake([
+            'https://brasilapi.com.br/api/cep/v2/*' => Http::response(
+                ['message' => 'Erro interno'],
+                500
+            ),
+        ]);
+
+        // Act
+        $resposta = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->getJson("/api/cep/{$cep}");
+
+        // Assert
+        $resposta->assertStatus(502)
+            ->assertJson([
+                'message' => 'Erro ao consultar serviço de CEP',
+            ]);
+    });
+});
