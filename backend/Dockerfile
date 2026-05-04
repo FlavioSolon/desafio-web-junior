@@ -15,4 +15,10 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+COPY composer.json composer.lock ./
+RUN composer install --no-interaction --optimize-autoloader --no-dev || true
+
+ENTRYPOINT ["docker-entrypoint.sh"]

@@ -55,23 +55,17 @@ docker compose exec backend php artisan migrate:fresh --seed
 ## Comandos úteis
 
 ```bash
-# Ver logs
 docker compose logs -f
 
-# Logs específicos
 docker compose logs backend -f
 docker compose logs frontend -f
 
-# Restart
 docker compose restart
 
-# Parar
 docker compose down
 
-# Rodar testes backend
 docker compose exec backend php artisan test
 
-# Acessar container backend
 docker compose exec backend bash
 ```
 
